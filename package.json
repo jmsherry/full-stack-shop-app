@@ -2,5 +2,18 @@
   "name": "fullstack-portfolio",
   "version": "1.0.0",
   "main": "index.js",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "setup": "concurrently --kill-others-on-fail  \"cd server && yarn\" \"cd client && yarn --network-concurrency 1\"",
+    "client:dev": "cd client && yarn start",
+    "server:dev": "cd server && yarn start:dev",
+    "dev": "concurrently --kill-others-on-fail \"yarn server:dev\" \"yarn client:dev\""
+  },
+  "dependencies": {
+    "concurrently": "^6.0.0",
+    "rimraf": "^3.0.2"
+  },
+  "devDependencies": {
+    "yarn": "^1.22.10"
+  }
 }
