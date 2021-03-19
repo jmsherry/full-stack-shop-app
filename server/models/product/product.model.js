@@ -10,6 +10,10 @@ const ProductSchema = new Schema({
     type: Number,
     required: true,
   },
+  category: {
+    type: String,
+    enum: ["starter", "main", "dessert", "beverage"],
+  },
 });
 
 const Product = mongoose.model("Product", ProductSchema);

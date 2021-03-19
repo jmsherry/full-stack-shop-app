@@ -1,0 +1,1 @@
+export const productCategories = ["starter", "main", "dessert", "beverage"];

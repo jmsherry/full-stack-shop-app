@@ -1,41 +1,37 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Route,
+  // Redirect,
+  Switch,
+} from "react-router-dom";
+import { ToastProvider } from "react-toast-notifications";
+import { MenuProvider } from "./contexts/menu.context";
+import { ProductsProvider } from "./contexts/products.context";
 import "./App.css";
 
+// Pages
+import Home from "./pages/Home/Home";
+import AddProduct from "./pages/AddProduct/AddProduct";
+import UpdateProduct from "./pages/UpdateProduct/UpdateProduct";
+import NotFound from "./pages/404/404";
+
 function App() {
-  const [products, setProducts] = useState([]);
-
-  useEffect(() => {
-    const getData = async () => {
-      console.log("getting");
-      try {
-        const response = await fetch("/api/v1/products");
-        console.log(
-          "🚀 ~ file: App.js ~ line 12 ~ getData ~ response",
-          response
-        );
-
-        if (!response.ok) throw response;
-
-        const data = await response.json();
-        console.log("🚀 ~ file: App.js ~ line 15 ~ getData ~ data", data);
-        setProducts(data);
-      } catch (err) {
-        console.log("error", err.message || err.statusText);
-      }
-    };
-    getData();
-  }, [setProducts]);
   return (
-    <div className="App">
-      <h1>Products</h1>
-      <ul>
-        {products.map(({ title, price }) => (
-          <li key={title}>
-            {title} (£{price.toFixed(2)})
-          </li>
-        ))}
-      </ul>
-    </div>
+    <Router>
+      <ToastProvider autoDismiss={true}>
+        <MenuProvider>
+          <ProductsProvider>
+            <Switch>
+              <Route exact path="/" component={Home} />
+              <Route path="/product/add" component={AddProduct} />
+              <Route path="/product/update/:id" component={UpdateProduct} />
+              <Route path="*" component={NotFound} />
+            </Switch>
+          </ProductsProvider>
+        </MenuProvider>
+      </ToastProvider>
+    </Router>
   );
 }
 

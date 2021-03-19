@@ -16,6 +16,10 @@ module.exports = function (app) {
       res.sendFile(path.join(__dirname, "../../client/", "build/index.html"));
     }
   });
+
+  app.get('', (req, res) => {
+    res.redirect();
+  })
   
   app.all("*", (req, res) => {
     res.sendStatus(404);
