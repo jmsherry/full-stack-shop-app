@@ -17,6 +17,7 @@ import { productCategories } from "./../../constants";
 import { ProductsContext } from "./../../contexts/products.context";
 // import ErrorBoundary from "./../../components/error-boundary/ErrorBoundary";
 
+
 const useStyles = makeStyles((theme) => ({
   button: {
     margin: theme.spacing(1),
@@ -61,7 +62,7 @@ function ProductForm({ initialValues }) {
     defaultValues,
   });
 
-  console.log("formState", formState);
+  // console.log("formState", formState);
   const { isDirty, isValid } = formState;
 
   if (initialValues && !populated) {

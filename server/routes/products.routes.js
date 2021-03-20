@@ -5,13 +5,23 @@ const {
   getProducts,
   addProduct,
   updateProduct,
-  removeProduct,
+  removeProduct
 } = require("../controllers/product.controller.js");
+
+const { checkPermissions } = require("../middleware/permissions.middleware");
+const {checkJwt} = require("./../middleware/authz.middleware");
+
+const {
+  CreateProducts,
+  DeleteProducts,
+  // ReadProducts,
+  UpdateProducts
+} = require("../constants").ProductPermission;
 
 router
   .get("/:id?", getProducts)
-  .post("/", addProduct)
-  .put("/:id", updateProduct)
-  .delete("/:id", removeProduct);
+  .post("/", checkJwt, checkPermissions(CreateProducts), addProduct)
+  .put("/:id", checkJwt, checkPermissions(UpdateProducts), updateProduct)
+  .delete("/:id", checkJwt, checkPermissions(DeleteProducts), removeProduct);
 
 module.exports = router;

@@ -1,10 +1,15 @@
 import React, { useContext, useEffect } from "react";
 import { ProductsContext } from "./../../contexts/products.context";
 import { productCategories } from "../../constants";
-import { formatPrice } from "./../../utils";
+import { formatPrice } from "../../utils/utils";
 import { makeStyles } from "@material-ui/core/styles";
 import { IconButton } from "@material-ui/core";
 import { Delete, Edit } from "@material-ui/icons";
+import { useAuth0 } from "@auth0/auth0-react";
+import {ProductPermission} from './../../constants';
+import {
+  Link,
+} from 'react-router-dom';
 
 const useStyles = makeStyles((theme) => ({
   button: {
@@ -31,19 +36,28 @@ const useStyles = makeStyles((theme) => ({
 
 function ProductsList() {
   const classes = useStyles();
+  const { user } = useAuth0();
+  let permissions = [];
+  if(user) {
+    permissions = user[`${window.location.origin}/user_authorization`].permissions;
+  }
+  const canUpdate = permissions.includes(ProductPermission.UpdateProducts);
+  const canDelete = permissions.includes(ProductPermission.DeleteProducts);
+
+
   const { products, loaded, fetchProducts, loading, error, deleteProduct } = useContext(
     ProductsContext
   );
   const productsByCategory = {};
 
-  console.log("products", products);
+  // console.log("products", products);
 
   useEffect(() => {
-    console.log("in useEffect", products, loaded);
-    if (!loaded) {
+    // console.log("in useEffect", products, loaded, loading);
+    if (!loading && !loaded) {
       fetchProducts();
     }
-  }, [loaded, fetchProducts, products]);
+  }, [loaded, fetchProducts, products, loading]);
 
   if (products.length === 0) {
     return <p>No products to display</p>;
@@ -62,10 +76,10 @@ function ProductsList() {
   if (error) return <p>Error: {error}</p>;
 
   const sections = Object.keys(productsByCategory).map((category) => {
-    console.log(
-      "🚀 ~ file: ProductsList.js ~ line 37 ~ sections ~ category",
-      category
-    );
+    // console.log(
+    //   "🚀 ~ file: ProductsList.js ~ line 37 ~ sections ~ category",
+    //   category
+    // );
     // console.log('cat', category, productsByCategory[category].map(({ _id, title, price }) => (
     //         <li key={_id}>
     //           {title} (£{price})
@@ -78,12 +92,12 @@ function ProductsList() {
           {productsByCategory[category].map(({ _id, title, price }) => (
             <li key={_id}>
               {title} ({formatPrice(price)})
-              <IconButton aria-label="update" href={`/product/update/${_id}`}>
+              {canUpdate && <IconButton aria-label="update" component={Link} to={`/product/update/${_id}`}>
                 <Edit />
-              </IconButton>
-              <IconButton aria-label="delete" onClick={() => deleteProduct(_id)} >
+              </IconButton>}
+              {canDelete && <IconButton aria-label="delete" onClick={() => deleteProduct(_id)} >
                 <Delete />
-              </IconButton>
+              </IconButton>}
             </li>
           ))}
         </ul>

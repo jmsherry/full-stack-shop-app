@@ -1,6 +1,13 @@
-import React, { createContext, useState, useCallback } from "react";
+import React, { createContext, useState, useCallback, useEffect } from "react";
 import { useToasts } from "react-toast-notifications";
+import { useAuth0 } from "@auth0/auth0-react";
 // import cloneDeep from 'lodash.cloneDeep' <-- use if your objects get complex
+const domain = window.location.host;
+
+let headers = {
+  "Content-Type": "application/json",
+  // 'Content-Type': 'application/x-www-form-urlencoded',
+};
 
 export const ProductsContext = createContext({
   fetchProducts: () => [],
@@ -14,47 +21,119 @@ export const ProductsContext = createContext({
 });
 
 export const ProductsProvider = (props) => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(null);
+  const { getAccessTokenSilently, user, loginWithRedirect } = useAuth0();
+  const [accessToken, setAccessToken] = useState(null);
+
+  const [state, setState] = useState({
+    loading: false,
+    loaded: false,
+    error: null,
+    products: [],
+  });
+
+  const {loading, error, products, loaded} = state;
+  // console.log('rerendering', {loading, error, products, loaded});
+
+  const setLoading = useCallback(
+    () =>
+      setState({
+        ...state,
+        loading: true,
+      }),
+    [state]
+  );
+
+  const setProducts = useCallback(
+    (data) =>
+      setState({
+        ...state,
+        products: data,
+        loading: false,
+        loaded: true,
+      }),
+    [state]
+  );
+
+  const setError = useCallback(
+    (err) =>
+      setState({
+        ...state,
+        error: err.message || err.statusText,
+        loading: false,
+        loaded: true,
+      }),
+    [state]
+  );
+
   // const [search, setSearch] = useState("");
   const { addToast } = useToasts();
+
+  useEffect(() => {
+    const getToken = async () => {
+      console.log("gettng AT", `http://${domain}/api/v1`);
+      try {
+        const Acctoken = await getAccessTokenSilently();
+        console.log("GOT AT", Acctoken);
+        setAccessToken(Acctoken);
+        console.log("afterSet", accessToken);
+      } catch (err) {
+        console.log("getAccessTokenSilently err", err);
+        if (
+          err.error === "login_required" ||
+          err.error === "consent_required"
+        ) {
+          loginWithRedirect();
+        }
+      }
+    };
+    if (user) {
+      console.log("user", user);
+      getToken();
+    }
+  }, [accessToken, getAccessTokenSilently, loginWithRedirect, user]);
 
   const fetchProducts = useCallback(async () => {
     // console.log('loading', loading);
     // console.log('error', error);
+
+    const { loading, loaded, error } = state;
+
     if (loading || loaded || error) {
       return;
-    } else {
-      setLoading(true);
     }
+
+    setLoading();
+
     try {
-      const response = await fetch("/api/v1/products");
-      if (response.status !== 200) {
+      const response = await fetch("/api/v1/products", {
+        headers: accessToken
+          ? { ...headers, Authorization: `Bearer ${accessToken}` }
+          : headers,
+      });
+      if (!response.ok) {
         throw response;
       }
       const data = await response.json();
       setProducts(data);
-      // setLoading(false);
       // console.log('products from context', products);
     } catch (err) {
-      setError(err.message || err.statusText);
-    } finally {
-      setLoading(false);
-      setLoaded("true");
+      console.log("err", err);
+      setError(err);
     }
-  }, [error, loaded, loading]);
+  }, [accessToken, setError, setLoading, setProducts, state]);
 
   const addProduct = useCallback(
     async (formData) => {
+      console.log("headers", headers);
+      console.log("accessToken", accessToken);
+      setLoading();
+      const {products} = state;
       try {
         const response = await fetch("/api/v1/products", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            // 'Content-Type': 'application/x-www-form-urlencoded',
-          },
+          headers: accessToken
+            ? { ...headers, Authorization: `Bearer ${accessToken}` }
+            : headers,
           body: JSON.stringify(formData),
         });
         if (response.status !== 201) {
@@ -68,27 +147,29 @@ export const ProductsProvider = (props) => {
         });
       } catch (err) {
         console.log(err);
+        setState(err);
         addToast(`Error ${err.message || err.statusText}`, {
           appearance: "error",
         });
       }
     },
-    [addToast, products]
+    [accessToken, addToast, setLoading, setProducts, state]
   );
 
   const updateProduct = useCallback(
     async (id, updates) => {
       let newProduct = null;
+      setLoading();
+      const {products} = state;
       try {
         const response = await fetch(`/api/v1/products/${id}`, {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            // 'Content-Type': 'application/x-www-form-urlencoded',
-          },
+          headers: accessToken
+            ? { ...headers, Authorization: `Bearer ${accessToken}` }
+            : headers,
           body: JSON.stringify(updates),
         });
-        if (response.status !== 200) {
+        if (!response.ok) {
           throw response;
         }
         // Get index
@@ -117,31 +198,36 @@ export const ProductsProvider = (props) => {
           newProduct,
           ...products.slice(index + 1),
         ];
-        console.log("🚀 ~ file: products.context.js ~ line 120 ~ updatedProducts", updatedProducts)
+        console.log(
+          "🚀 ~ file: products.context.js ~ line 120 ~ updatedProducts",
+          updatedProducts
+        );
         setProducts(updatedProducts);
         addToast(`Updated ${newProduct.title}`, {
           appearance: "success",
         });
       } catch (err) {
         console.log(err);
+        setError(err);
         addToast(`Error: Failed to update ${newProduct.title}`, {
           appearance: "error",
         });
       }
     },
-    [addToast, products]
+    [accessToken, addToast, setError, setLoading, setProducts, state]
   );
 
   const deleteProduct = useCallback(
     async (id) => {
       let deletedProduct = null;
+      setLoading();
+      const {products} = state;
       try {
         const response = await fetch(`/api/v1/products/${id}`, {
           method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            // 'Content-Type': 'application/x-www-form-urlencoded',
-          },
+          headers: accessToken
+            ? { ...headers, Authorization: `Bearer ${accessToken}` }
+            : headers,
         });
         if (response.status !== 204) {
           throw response;
@@ -160,13 +246,16 @@ export const ProductsProvider = (props) => {
         });
       } catch (err) {
         console.log(err);
+        setError(err);
         addToast(`Error: Failed to update ${deletedProduct.title}`, {
           appearance: "error",
         });
       }
     },
-    [addToast, products]
+    [accessToken, addToast, setError, setLoading, setProducts, state]
   );
+
+  
 
   return (
     <ProductsContext.Provider
@@ -174,6 +263,7 @@ export const ProductsProvider = (props) => {
         products,
         loading,
         error,
+        loaded,
         fetchProducts,
         addProduct,
         updateProduct,

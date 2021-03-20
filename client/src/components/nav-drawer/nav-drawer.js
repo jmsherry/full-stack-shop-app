@@ -6,6 +6,8 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import { MenuContext } from "./../../contexts/menu.context";
 import { NavLink } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
+import {ProductPermission} from './../../constants';
 
 const useStyles = makeStyles({
   list: {
@@ -14,8 +16,11 @@ const useStyles = makeStyles({
 });
 
 const NavDrawer = () => {
+  const { user } = useAuth0();
   const classes = useStyles();
+
   const { isOpen, toggle } = useContext(MenuContext);
+
   const handleDrawer = () => (event) => {
     if (
       event.type === "keydown" &&
@@ -23,9 +28,24 @@ const NavDrawer = () => {
     ) {
       return;
     }
-
     toggle();
   };
+
+  let menuItems = [{ text: "Menu", to: "/" }];
+
+  if (user) {
+    const {permissions} = user["http://localhost:3000/user_authorization"];
+    // console.log('permissions', permissions);
+    if (
+      permissions.includes(
+        ProductPermission.CreateProducts
+      )
+    ) {
+      menuItems = [...menuItems, { text: "Add Product", to: "/product/add" }];
+    }
+    menuItems = [...menuItems, { text: "Profile", to: "/profile" }]
+  }
+
   return (
     <Drawer anchor="left" open={isOpen} onClose={handleDrawer()}>
       <div
@@ -35,10 +55,7 @@ const NavDrawer = () => {
         onKeyDown={handleDrawer()}
       >
         <List>
-          {[
-            { text: "Menu", to: "/" },
-            { text: "Add Products", to: "/product/add" },
-          ].map(({ text, to }) => (
+          {menuItems.map(({ text, to }) => (
             <ListItem button component={NavLink} to={to} key={text}>
               <ListItemText>{text}</ListItemText>
             </ListItem>

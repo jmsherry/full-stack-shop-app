@@ -3,7 +3,7 @@ const path = require("path");
 const helmet = require("helmet");
 const cors = require("cors");
 const compression = require("compression");
-const morgan = require('morgan')
+const morgan = require('morgan');
 
 module.exports = function (app) {
   // In dev mode, react-server serves the files BUT in production we BUILD the react project and express serves it out of the build folder
@@ -25,4 +25,5 @@ module.exports = function (app) {
 
   // http logging
   app.use(morgan('dev'));
+
 };
