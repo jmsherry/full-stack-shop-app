@@ -39,3 +39,5 @@ On the server-side, where that API is, you'll need a `.env` file, which looks li
 AUTH0_DOMAIN=js6.auth0.com
 AUTH0_AUDIENCE="http://localhost:3000/api/v1"
 ```
+
+Reference article: <https://auth0.com/blog/node-js-and-typescript-tutorial-secure-an-express-api/#Set-Up-an-Authorization-Service>
