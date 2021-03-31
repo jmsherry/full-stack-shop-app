@@ -1,8 +1,10 @@
-import { render, screen } from '@testing-library/react';
-import App from './App';
+import { render, screen } from "@testing-library/react";
+import App from "./App";
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+describe("The App Component", () => {
+  test("it renders", async () => {
+    render(<App />);
+    const headerElement = await screen.findByText(/Todos Full-Stack App/i);
+    expect(headerElement).toBeInTheDocument();
+  });
 });
