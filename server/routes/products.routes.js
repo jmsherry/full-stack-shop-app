@@ -18,9 +18,14 @@ const {
   UpdateProducts
 } = require("../constants").ProductPermission;
 
+const logToken = (req, res, next) => {
+  console.log(req.headers);
+  next();
+}
+
 router
-  .get("/:id?", getProducts)
-  .post("/", checkJwt, checkPermissions(CreateProducts), addProduct)
+  .get("/:id?", logToken, getProducts)
+  .post("/", logToken, checkJwt, checkPermissions(CreateProducts), addProduct)
   .put("/:id", checkJwt, checkPermissions(UpdateProducts), updateProduct)
   .delete("/:id", checkJwt, checkPermissions(DeleteProducts), removeProduct);
 
