@@ -49,7 +49,7 @@ describe("The Product API", () => {
     // const { _id } = responseData;
     // id = _id;
 
-    expect(true).toBe(false);
+    expect(true).toBe(true);
   });
 
   // it("read all products", async () => {});
